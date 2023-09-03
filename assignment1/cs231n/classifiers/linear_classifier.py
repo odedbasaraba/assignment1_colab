@@ -65,8 +65,9 @@ class LinearClassifier(object):
             # replacement is faster than sampling without replacement.              #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-            pass
+            samples = np.random.choice(num_train,batch_size)
+            X_batch = X[samples]
+            y_batch = y[samples]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -80,7 +81,7 @@ class LinearClassifier(object):
             # Update the weights using the gradient and the learning rate.          #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+            self.W -=  learning_rate * grad
             pass
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -110,7 +111,8 @@ class LinearClassifier(object):
         # Implement this method. Store the predicted labels in y_pred.            #
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        scores = X.dot(self.W)
+        y_pred = np.argmax(scores,axis = 1)
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -131,9 +133,25 @@ class LinearClassifier(object):
         - loss as a single float
         - gradient with respect to self.W; an array of the same shape as W
         """
-        pass
+        num_train = X_batch[0]
+        scores = X_batch.dot(self.W)
+        correct_scores = scores[np.arange(num_train), y_batch].reshape(-1, 1)
+        margin = np.maximum(0, scores - correct_scores + 1)
+        margin[np.arange(num_train), y_batch] = 0
+        # Compute the total loss and add regularization
+        loss = np.sum(margin) / num_train
+        loss += 0.5 * reg * np.sum(self.W * self.W)
+        incorrect_matrix = margin
+        incorrect_matrix[incorrect_matrix > 0] = 1
+        row_sum = np.sum(incorrect_matrix, axis=1)
+        incorrect_matrix[np.arange(num_train), y_batch] = -row_sum
 
+        dW = X_batch.T.dot(incorrect_matrix)
+        dW /= num_train
+        dW += reg * self.W
 
+        return loss, dW
+    
 class LinearSVM(LinearClassifier):
     """ A subclass that uses the Multiclass SVM loss function """
 
