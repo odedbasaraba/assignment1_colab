@@ -27,8 +27,13 @@ def affine_forward(x, w, b):
     # will need to reshape the input into rows.                               #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    # Reshape x into a 2D matrix (N, D)
+    tmp_x = x.reshape(x.shape[0], -1)
 
-    pass
+
+
+    # Perform the matrix multiplication with w
+    out = np.dot(tmp_x, w) + b
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -61,8 +66,19 @@ def affine_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # Calculate the gradient with respect to x
+    dx = np.dot(dout, w.T)
+    dx = dx.reshape(x.shape)  # Reshape back to the original shape
 
+    x = x.reshape(x.shape[0],np.prod(x.shape[1:]))
+    # Calculate the gradient with respect to w
+    dw = np.dot(x.T, dout)
+
+    # Calculate the gradient with respect to b
+    db = np.sum(dout, axis=0)
+
+    # Gradient of b (db)
+    db = np.sum(dout, axis=0)
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -87,7 +103,7 @@ def relu_forward(x):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    out = np.maximum(0,x)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -114,7 +130,7 @@ def relu_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    dx = dout * (x > 0)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -773,7 +789,19 @@ def svm_loss(x, y):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N = x.shape[0]  # Number of samples
+    correct_class_scores = x[np.arange(N), y]  # Scores of the correct classes
+    margins = np.maximum(0, x - correct_class_scores[:, np.newaxis] + 1.0)  # Compute margins
+    margins[np.arange(N), y] = 0  # Set margin for correct class to 0
+
+    loss = np.sum(margins) / N  # Compute the loss as the average of margins
+
+    # Compute gradient
+    num_pos = np.sum(margins > 0, axis=1)  # Count number of positive margins per sample
+    dx = np.zeros_like(x)
+    dx[margins > 0] = 1
+    dx[np.arange(N), y] -= num_pos  # Subtract num_pos from correct class scores
+    dx /= N
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -803,7 +831,20 @@ def softmax_loss(x, y):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # Number of examples
+    N = x.shape[0]
+    
+    # Compute the softmax scores
+    exp_x = np.exp(x - np.max(x, axis=1, keepdims=True))
+    softmax_scores = exp_x / np.sum(exp_x, axis=1, keepdims=True)
+    
+    # Compute the cross-entropy loss
+    loss = -np.sum(np.log(softmax_scores[np.arange(N), y])) / N
+    
+    # Compute the gradient
+    dx = softmax_scores.copy()
+    dx[np.arange(N), y] -= 1
+    dx /= N
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
