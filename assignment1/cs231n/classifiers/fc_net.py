@@ -55,8 +55,10 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
-
+        self.params['W1'] = np.random.normal(0.0, weight_scale, size = (input_dim, hidden_dim))
+        self.params['b1'] = np.zeros(hidden_dim)
+        self.params['W2'] = np.random.normal(0.0, weight_scale, size = (hidden_dim, num_classes))
+        self.params['b2'] = np.zeros(num_classes)
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -82,14 +84,21 @@ class TwoLayerNet(object):
           names to gradients of the loss with respect to those parameters.
         """
         scores = None
+        W1, b1 = self.params['W1'], self.params['b1']
+        W2, b2 = self.params['W2'], self.params['b2']
+        N = X.shape[0]
         ############################################################################
         # TODO: Implement the forward pass for the two-layer net, computing the    #
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        scores1 = X.dot(W1) + b1
+        hidden_layer = np.maximum(0,scores1)
+        scores = hidden_layer.dot(W2) + b2
 
-        pass
-
+        exp_scores = np.exp(scores)
+        probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
+         
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -112,11 +121,28 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # Compute loss
+        loss = -np.log(probs[np.arange(N), y]).sum() / N
+        reg_loss = 0.5 * self.reg * (np.sum(W1 * W1) + np.sum(W2 * W2))
+        loss += reg_loss
 
+        # Compute gradients
+        dscores = probs.copy()
+        dscores[np.arange(N), y] -= 1
+        dscores /= N
+
+        grads['W2'] = hidden_layer.T.dot(dscores) + self.reg * W2 
+        grads['b2'] = np.sum(dscores, axis=0)
+        dhidden_layer = dscores.dot(W2.T)
+        dhidden_layer[hidden_layer<= 0] = 0
+        grads['W1'] = X.T.dot(dhidden_layer) +  self.reg * W1
+        grads['b1'] = np.sum(dhidden_layer, axis=0)
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
 
         return loss, grads
+      
+    
+    
