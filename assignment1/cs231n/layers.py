@@ -77,8 +77,6 @@ def affine_backward(dout, cache):
     # Calculate the gradient with respect to b
     db = np.sum(dout, axis=0)
 
-    # Gradient of b (db)
-    db = np.sum(dout, axis=0)
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
